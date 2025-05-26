@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  wshub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wshub
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - HTTP_PORT=8080
+    depends_on:
+      - centrifugo
+    networks:
+      - wshub-network
+
+networks:
+  wshub-network:
+    driver: bridge

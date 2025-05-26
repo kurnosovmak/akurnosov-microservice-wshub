@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <div id="messages"></div>
+    <script>
+        // Функция для получения JWT токена (вам нужно реализовать эту функцию)
+        async function getAuthToken() {
+            // Здесь должна быть логика получения токена с вашего сервера
+            const resp = await fetch('http://localhost:8081/credentials', {
+                method: 'POST',
+                body: JSON.stringify({
+                    channel: 'test',
+                }),
+            })
+            const creds = await resp.json()
+            return creds.token;
+        }
+        let ws;
+        // Функция для подключения к WebSocket
+        async function connectWebSocket() {
+            const token = await getAuthToken();        
+            
+            // Создаем WebSocket соединение
+            ws = new WebSocket(`ws://localhost:8081/ws?token=${token}`);
+
+            // Обработка открытия соединения
+            ws.onopen = function() {
+                console.log('WebSocket соединение установлено');
+            };
+
+            // Обработка входящих сообщений
+            ws.onmessage = function(event) {
+            
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML += `<p>${event.data}</p>`;
+            };
+
+            // Обработка ошибок
+            ws.onerror = function(error) {
+                console.error('WebSocket ошибка:', error);
+            };
+
+            // Обработка закрытия соединения
+            ws.onclose = function() {
+                console.log('WebSocket соединение закрыто');
+                // Можно добавить логику переподключения здесь
+            };
+
+            return ws;
+        }
+
+        // Запускаем подключение
+        connectWebSocket().then((w) => {
+            // После подключения можно отправлять сообщения
+            // setInterval(() => {
+            //     w.send('Hello, WebSocket!');
+            // }, 1000);
+        });
+    </script>
+</body>
+</html>
