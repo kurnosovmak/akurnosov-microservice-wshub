@@ -74,7 +74,7 @@ func (h *Handler) WS(w http.ResponseWriter, r *http.Request) {
 
 		}()
 		<-ctx.Done()
-	}(conn, r.Context())
+	}(conn, context.Background())
 }
 
 func (h *Handler) Broadcast(w http.ResponseWriter, r *http.Request) {
