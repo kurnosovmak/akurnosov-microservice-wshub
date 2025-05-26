@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	ChannelKey = "channel"
+	ChannelKey  = "channel"
+	DurationKey = "ttl"
 )
 
 func JWTMiddleware(cfg config.JWTConfig) func(http.Handler) http.Handler {
@@ -42,7 +43,15 @@ func JWTMiddleware(cfg config.JWTConfig) func(http.Handler) http.Handler {
 				return
 			}
 
+			exp, ok := claims["exp"].(float64)
+			if !ok {
+				http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+				log.Println("Invalid token claims 1", claims)
+				return
+			}
+
 			ctx := context.WithValue(r.Context(), ChannelKey, channel)
+			ctx = context.WithValue(ctx, DurationKey, int(exp))
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

@@ -34,6 +34,11 @@ func getChannel(r *http.Request) (string, bool) {
 	return channel, ok
 }
 
+func getTTl(r *http.Request) (int, bool) {
+	ttl, ok := r.Context().Value(middleware.DurationKey).(int)
+	return ttl, ok
+}
+
 func (h *Handler) WS(w http.ResponseWriter, r *http.Request) {
 	log.Println("Http connected")
 	channel, ok := getChannel(r)
@@ -41,6 +46,12 @@ func (h *Handler) WS(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid channel or token", http.StatusBadRequest)
 		return
 	}
+	_, ok = getTTl(r)
+	if !ok {
+		http.Error(w, "Invalid ttl or token", http.StatusBadRequest)
+		return
+	}
+
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -73,7 +84,14 @@ func (h *Handler) WS(w http.ResponseWriter, r *http.Request) {
 			conn.Close()
 
 		}()
-		<-ctx.Done()
+		select {
+		case <-ctx.Done():
+			log.Println("WS disconnected ctx")
+			return
+		case <-time.NewTimer(time.Duration(20 * time.Minute)).C:
+			log.Println("WS disconnected time")
+			return
+		}
 	}(conn, context.Background())
 }
 
